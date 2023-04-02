@@ -40,23 +40,19 @@ def episode_meta_string(episode):
 
     return s
 
-def play_latest_episode(podcast_feed_url):
+def latest_episode(podcast_feed_url):
+    """
+    Returns the URL of the mp3 for the last podcast upload.
+    """
     # Download the podcast feed and get the XML data as a string
     feed = parse_feed(podcast_feed_url)
     latest_episode_url = feed['episodes'][0]['enclosures'][0]['url']
-    title = feed['episodes'][0]['enclosures'][0]['title']
+    try:
+        title = feed['episodes'][0]['enclosures'][0]['title']
+    except IndexError:
+        print(feed['episodes'][0]['enclosures'])
 
-    instance = vlc.Instance('--no-xlib')
-    media_player = instance.media_player_new()
-    media = vlc.Media(latest_episode_url)
-    media_player.set_media(media)
-    media_player.play()
-
-    # Wait for the episode to finish playing before exiting the function
-    time.sleep(5)
-    duration = media_player.get_length()
-    print_now_playing(title, duration/1000)
-    time.sleep(duration / 1000 + 1)# Create a VLC media player instance and play the latest episode
+    return latest_episode_url
 
 def print_now_playing(name, duration):
     if duration:
@@ -66,29 +62,27 @@ def print_now_playing(name, duration):
     print("Now Playing:")
     print(f"{name} [{duration_str}]")
 
-def get_recent_episode_urls(podcast_feed_url, n=None):
+def get_recent_episodes(feed, n=None):
     # Download the podcast feed and get the XML data as a string
-    feed = parse_feed(podcast_feed_url)
     episodes = feed['episodes']
     if n is not None:
         episodes = episodes[:n]
-    episode_data = []
+    episodes_data = []
     for episode in episodes:
         name = episode['title']
         if 'duration' in episode:
             duration = episode['duration']
         else:
             duration = None
-        url = episode['enclosures'][0]['url']
-        episode_data.append((name, duration, url))
+        try:
+            url = episode['enclosures'][0]['url']
+        except IndexError:
+            pass # This stupid error only happens with the music podcasts for some reason. It is a cursed error. Stay well away from it.
+        episodes_data.append((name, duration, url))
 
-    return episode_data
-
-def choose_random_episode(data):
-    return random.choice(data)
+    return episodes_data
 
 def play_episode(episode):
-    print(episode[2])
     instance = vlc.Instance('--no-xlib')
     player = instance.media_player_new()
     media = vlc.Media(episode[2])
@@ -101,6 +95,17 @@ def play_episode(episode):
     time.sleep(duration/1000 + 1)
     player.stop()
 
+def download_episode(episode, filename):
+    """
+    Downloads and saves the episode from a given episode entity
+    """
+    print(episode[2])
+
+    data = requests.get(episode[2])
+    with open(filename, "wb") as f:
+        f.write(data.content)
+
+
 if __name__ == "__main__":
 #    data = get_recent_episode_urls('https://podcasts.files.bbci.co.uk/p02nq0gn.rss')
 #    play_episode(choose_random_episode(data))
@@ -108,5 +113,5 @@ if __name__ == "__main__":
 #    print(get_recent_episode_urls('https://stickynotespodcast.libsyn.com/rss', 20))
 
     feed = parse_feed('https://podcasts.files.bbci.co.uk/p02nq0gn.rss')
-    print(podcast_meta_string(feed))
-    print(episode_meta_string(feed['episodes'][0]))
+    episodes = get_recent_episodes(feed, 1)
+    download_episode(episodes[0], "hello.mp3")
