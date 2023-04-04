@@ -3,31 +3,30 @@ import os
 
 import openai
 
+import config
 import podcasts
-
-api_key = os.getenv("OPENAI_API_KEY")
-feed = podcasts.parse_feed("https://podcasts.files.bbci.co.uk/b006qykl.rss")
-episode = feed['episodes'][0]
 
 PROMPT_STRING = """
 I have set up a personalised radio system where randomly selected podcast episodes will be played in sequence.
 Your task is to act as a continuity announcer, and briefly and concisely introduce upcoming episodes with some information about the podcast and its host.
 You don't need to include ALL the details, just choose what you think is most important.
-I definitely need you to mention the date and year the episode we are playing was aired in.
-Here are the details:
+If and only if it's not a news episode, I definitely need you to mention the date and year the episode we are playing was aired in.
 
+Here are the details:
 %pod_det%
 %ep_det%
 
 CONTINUITY ANNOUNCEMENT:
 """
 
-INTRO_STRING = """
-You are a radio announcer named Luna for a morning radio show named "Lunacy, the personal radio broadcast for Pranav Minasandra".
-You will be given today's schedule, which will consist of 1 news episode, 1 music piece, and 1 episode focussing on either science or history.
+INTRO_STRING = f"""
+You are a radio presenter named Luna for a morning radio show named "Lunacy, the personal radio broadcast for {config.OWNER_NAME}".
+You will be given today's schedule, which will consist of some episodes.
+A given episode could focus on news, music, science, history or something else.
 These episodes might occur in a different order to that listed above, and the order will be specified in the details.
 You might or might not be given additional information.
-Mentioning today's date as the date given in the details, and incorporating all details given, present a cheerful introduction to today's show.
+Mentioning today's date as the date given in the details, and incorporating all details given, present a cheerful, quirky introduction to today's show.
+There is no need to be concise, and you can be as witty as you like.
 
 DETAILS:
 %details%
@@ -59,7 +58,7 @@ def generate_intro(date="default", extra_details=None):
         import datetime as dt
         date = dt.datetime.today()
 
-        days = ["Modayn", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         day = days[date.weekday()]
 
     openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your OpenAI API key

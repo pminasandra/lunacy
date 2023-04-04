@@ -1,12 +1,11 @@
 
 import datetime as dt
 import random
-import requests
 import time
 import urllib.request
 
+import requests
 import podcastparser
-import vlc
 
 def parse_feed(podcast_feed_url):
     response = requests.get(podcast_feed_url)
@@ -54,14 +53,6 @@ def latest_episode(podcast_feed_url):
 
     return latest_episode_url
 
-def print_now_playing(name, duration):
-    if duration:
-        duration_str = f"{duration // 60}:{duration % 60:02d}"
-    else:
-        duration_str = "Unknown"
-    print("Now Playing:")
-    print(f"{name} [{duration_str}]")
-
 def get_recent_episodes(feed, n=None):
     # Download the podcast feed and get the XML data as a string
     episodes = feed['episodes']
@@ -78,22 +69,9 @@ def get_recent_episodes(feed, n=None):
             url = episode['enclosures'][0]['url']
         except IndexError:
             pass # This stupid error only happens with the music podcasts for some reason. It is a cursed error. Stay well away from it.
-        episodes_data.append((name, duration, url))
+        episodes_data.append((name, duration, url, episode))
 
     return episodes_data
-
-def play_episode(episode):
-    instance = vlc.Instance('--no-xlib')
-    player = instance.media_player_new()
-    media = vlc.Media(episode[2])
-    player.set_media(media)
-    player.play()
-    print_now_playing(episode[0], episode[1])
-
-    time.sleep(5)
-    duration = player.get_length()
-    time.sleep(duration/1000 + 1)
-    player.stop()
 
 def download_episode(episode, filename):
     """
@@ -107,11 +85,6 @@ def download_episode(episode, filename):
 
 
 if __name__ == "__main__":
-#    data = get_recent_episode_urls('https://podcasts.files.bbci.co.uk/p02nq0gn.rss')
-#    play_episode(choose_random_episode(data))
-#    play_latest_episode('https://stickynotespodcast.libsyn.com/rss')
-#    print(get_recent_episode_urls('https://stickynotespodcast.libsyn.com/rss', 20))
-
     feed = parse_feed('https://podcasts.files.bbci.co.uk/p02nq0gn.rss')
     episodes = get_recent_episodes(feed, 1)
     download_episode(episodes[0], "hello.mp3")

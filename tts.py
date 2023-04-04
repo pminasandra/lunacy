@@ -1,7 +1,6 @@
 import os.path
 
 import gtts
-import vlc
 
 import config
 

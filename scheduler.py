@@ -61,7 +61,7 @@ def download_schedule_materials(schedule, target="default"):
         print("Downloading episode:", episode[0])
         url = episode[2]
         data = requests.get(url)
-        path = os.path.join(target, f"{item_num:03}.mp3")
+        path = os.path.join(target, f"{item_num:03}e.mp3")
         with open(path, "wb") as p:
             p.write(data.content)
         print("finished!")
@@ -72,12 +72,14 @@ def download_schedule_materials(schedule, target="default"):
 def generate_all_announcements(schedule):
     announcements = []
     for feed, episode in schedule:
-        announcements.append(announcer.generate_announcement(feed, episode[2]))
+        print("Generating announcement for", episode[0])
+        announcements.append(announcer.generate_announcement(feed, episode[3]))
 
     return announcements
 
 def generate_main_intro(schedule, date="default"):
 
+    print("Generating general introduction")
     details = ""
     i = 0
     for feed, episode in schedule:
@@ -90,13 +92,15 @@ def generate_main_intro(schedule, date="default"):
 def save_announcer_voices(schedule):
 
     # Save intro
+    print("TTS initiated")
     main_intro_text = generate_main_intro(schedule)
     tts.generate_voice_saying(main_intro_text, os.path.join(config.TEMP_DIR, "current/", "000.mp3"))
 
     # Continuity text
     announcements = generate_all_announcements(schedule)
-    i = 0
+    i = 1
     for announcement in announcements:
+        print("TTS number", i, "of", len(schedule))
         tts.generate_voice_saying(announcement, os.path.join(config.TEMP_DIR, "current/", f"{i:03}a.mp3"))
         i += 1
 
